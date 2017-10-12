@@ -25,21 +25,41 @@ OFFSETS = {
     'Z': [0, -1, 0, 0]
 }
 
-
+ACTIONS = {
+    'I': 24,
+    'J': 48,
+    'L': 48,
+    'O': 12,
+    'S': 24,
+    'T': 48,
+    'Z': 24
+}
 
 def getShapePositionBounds(shape):
     return 0, GRID_W - len(shape[0])
 
 class Tetris:
-    def __init__(self, shapes):
+    def __init__(self, shapes, grid):
         self.shapes = shapes
         self.shapeIndex = 0
-        self.grid = np.zeros((GRID_H, GRID_W))
+        self.grid = grid
 
         self.score = 0
         self.lost = False
         self.won = False
         self.over = False
+
+    def get_nr_of_actions(self):
+        return ACTIONS[self.shapes[self.shapeIndex]]
+
+    def copy(self):
+        new = Tetris(self.shapes, np.copy(self.grid))
+        new.shapeIndex = self.shapeIndex
+        new.score = self.score
+        new.lost = self.lost
+        new.won = self.won
+        new.over = self.over
+        return new
 
     def clone(self):
         c = Tetris(self.shapes)
@@ -138,3 +158,10 @@ class Tetris:
             return maxX
         return x
 
+    def valid(self, shape, x):
+        minX, maxX = getShapePositionBounds(shape)
+        if (x < minX):
+            return minX
+        if (x > maxX):
+            return maxX
+        return x

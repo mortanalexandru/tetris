@@ -5,6 +5,8 @@ from joblib import Parallel, delayed
 import multiprocessing
 import time
 from datetime import datetime
+import cProfile
+import numpy as np
 
 games = []
 def read_games():
@@ -14,10 +16,10 @@ def read_games():
 
 def play_game(ai, game, counter):
     moves = []
-    tetris = Tetris(game)
+    tetris = Tetris(game, np.zeros((20, 10)))
     for i in range(len(game)):
         if not (tetris.won or tetris.lost):
-            action, score = ai.best_move(tetris, 1)
+            action, score = ai.best_move_improved(tetris, 1)
             move = (int((action % 12) - 1), int(action / 12))
             tetris.make_move(move[0], move[1])
             moves.append((move[0] + OFFSETS[game[i]][move[1]], move[1]))
@@ -27,6 +29,7 @@ def play_game(ai, game, counter):
                 break
     print("Game with number {0} has score {1}".format(counter, tetris.score))
     return ';'.join(['{}:{}'.format(a,b) for a,b in moves]), tetris.score, counter
+
 
 
 def test():
@@ -49,5 +52,3 @@ if __name__ == '__main__':
     read_games()
     test()
     print("ran in %d s" % (time.time() - start))
-    # ai = AI(0.510066, 0.760666, 0.35663, 0.184483)
-    # play_game(ai, "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", 0)
