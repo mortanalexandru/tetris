@@ -35,6 +35,8 @@ ACTIONS = {
     'Z': 24
 }
 
+
+
 def getShapePositionBounds(shape):
     return 0, GRID_W - len(shape[0])
 
@@ -52,8 +54,8 @@ class Tetris:
     def get_nr_of_actions(self):
         return ACTIONS[self.shapes[self.shapeIndex]]
 
-    def copy(self):
-        new = Tetris(self.shapes, np.copy(self.grid))
+    def copy(self, grid):
+        new = Tetris(self.shapes, grid)
         new.shapeIndex = self.shapeIndex
         new.score = self.score
         new.lost = self.lost

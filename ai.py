@@ -8,14 +8,16 @@ class AI:
         self.linesWeight = linesWeight
         self.holesWeight = holesWeight
         self.bumpinessWeight = bumpinessWeight
-        # self.grid_system = np.zeros((2304, 20, 10))
-        # self.grid_system.flags.writeable = True
-
+        self.grid_system = np.zeros((2304, 20, 10))
+        self.index = 0
 
     def best_move_improved(self, tetris, count):
         best_score, move = -1000, 0
         for action in range(tetris.get_nr_of_actions()):
-            game = tetris.copy()
+            # game = tetris.copy()
+            self.grid_system[self.index % 2304] = tetris.grid
+            game = tetris.copy(self.grid_system[self.index % 2304])
+            self.index += 1
             game.make_move((action % 12) - 1, int(action / 12), True)
             if not game.lost:
                 if count > 0 and game.shapeIndex < len(game.shapes):

@@ -14,7 +14,8 @@ def read_games():
         for line in games_file:
             games.append(line.rstrip())
 
-def play_game(ai, game, counter):
+def play_game(game, counter):
+    ai = AI(0.510066, 0.760666, 0.35663, 0.184483)
     moves = []
     tetris = Tetris(game, np.zeros((20, 10)))
     for i in range(len(game)):
@@ -33,10 +34,9 @@ def play_game(ai, game, counter):
 
 
 def test():
-    ai = AI(0.510066, 0.760666, 0.35663, 0.184483)
     num_cores = multiprocessing.cpu_count()
     print("Number of cores {0}".format(num_cores))
-    results = Parallel(n_jobs=num_cores)(delayed(play_game)(ai, game, i) for i, game in enumerate(games))
+    results = Parallel(n_jobs=num_cores)(delayed(play_game)(game, i) for i, game in enumerate(games))
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     total_score = 0
     with open('submissions/{0}.txt'.format(timestamp), 'w') as submission:
