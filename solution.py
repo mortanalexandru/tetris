@@ -15,7 +15,7 @@ def read_games():
             games.append(line.rstrip())
 
 def play_game(game, counter):
-    ai = AI(0.510066, 0.760666, 0.35663, 0.184483)
+    ai = AI(0.510066, 0.760666, 0.35663, 0.184483, 0, 0)
     moves = []
     tetris = Tetris(game, np.zeros((20, 10)))
     for i in range(len(game)):
