@@ -2,6 +2,10 @@ import random
 from math import sqrt, floor
 from ai import AI
 from tetris_engine import Tetris
+import solution
+from joblib import Parallel, delayed
+import multiprocessing
+import random
 
 games = []
 
@@ -21,6 +25,7 @@ def generateRandomCandidate():
     return candidate;
 
 
+
 def normalize(candidate):
     norm = sqrt(
         candidate.heightWeight * candidate.heightWeight + candidate.linesWeight * candidate.linesWeight + candidate.holesWeight * candidate.holesWeight + candidate.bumpinessWeight * candidate.bumpinessWeight);
@@ -34,21 +39,15 @@ def compare_fitness(c):
     return c.fitness
 
 
-def compute_fitness(candidates, nrGames):
+def compute_fitness(candidates):
     for candidate in candidates:
-        ai = AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight, candidate.bumpinessWeight)
+        # ai = AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight, candidate.bumpinessWeight)
         total_score = 0
-        prev_score = {}
-        for i in range(0, nrGames):
-            game = games[i]
-            board = Tetris(game)
-            for piece in game:
-                if not (game.won or game.lost):
-                    move = ai.move(board)
-                    board.make_move(move[0], move[1])
-                else:
-                    print("Game over")
-            total_score += board.score
+        num_cores = multiprocessing.cpu_count()
+        print("Number of cores {0}".format(num_cores))
+        results = Parallel(n_jobs=num_cores)(delayed(solution.play_game)(game, i, candidate) for i, game in enumerate(games))
+        for result in results:
+            total_score += result[1]
         candidate.fitness = total_score
     return candidates
 
@@ -71,7 +70,8 @@ def tournament_select(candidates, ways):
     fittestCandidateIndex1 = None;
     fittestCanddiateIndex2 = None;
     for i in range(0, ways):
-        selectedIndex = indices.splice(randomInteger(0, indices.length), 1)[0]
+        idx = randomInteger(0, len(indices))
+        selectedIndex = indices[idx: idx+1][0]
         if (fittestCandidateIndex1 is None or selectedIndex < fittestCandidateIndex1):
             fittestCanddiateIndex2 = fittestCandidateIndex1;
             fittestCandidateIndex1 = selectedIndex;
@@ -103,20 +103,46 @@ def mutate(candidate):
     return candidate
 
 def deleteNLastReplacement(candidates, newCandidates):
-    candidates.slice(-newCandidates.length);
+    candidates[-len(newCandidates):]
     for c in newCandidates:
         candidates.append(c)
     candidates.sort(key=compare_fitness)
     return candidates
 
 
+def generate_close_values(height, lines, holes, bumpiness):
+    case = random.randint(1, 8);
+    if case == 1:
+        return Candidate(height + random.uniform(0, 0.09), lines, holes, bumpiness)
+    if case == 2:
+        return Candidate(height, lines + random.uniform(0, 0.09),
+                         holes, bumpiness)
+    if case == 3:
+        return Candidate(height, lines,
+                         holes + random.uniform(0, 0.09), bumpiness)
+    if case == 4:
+        return Candidate(height, lines,
+                         holes, bumpiness + random.uniform(0, 0.09))
+    if case == 5:
+        return Candidate(height - random.uniform(0, 0.09), lines, holes, bumpiness)
+    if case == 6:
+        return Candidate(height, lines - random.uniform(0, 0.09),
+                         holes, bumpiness)
+    if case == 7:
+        return Candidate(height, lines,
+                         holes - random.uniform(0, 0.09), bumpiness)
+    if case == 8:
+        return Candidate(height, lines,
+                         holes, bumpiness - random.uniform(0, 0.9))
+
+
 def tune():
     candidates = []
-    for i in range(0, 1000):
-        candidates.push(generateRandomCandidate())
+    for i in range(0, 100):
+        candidates.append(generate_close_values(0.510066, 0.760666, 0.35663, 0.184483))
 
     # compute first generation
-    candidates = compute_fitness(candidates, 60)
+    candidates = compute_fitness(candidates)
     candidates.sort(key=compare_fitness)
 
     count = 0;
@@ -130,7 +156,7 @@ def tune():
             candidate = normalize(candidate)
             newCandidates.append(candidate)
         print("Computing fitnesses of new candidates {0}".format(count))
-        candidates = compute_fitness(candidates, 60)
+        candidates = compute_fitness(candidates)
         candidates = deleteNLastReplacement(candidates, newCandidates)
         total_fitness = 0
         for c in candidates:
