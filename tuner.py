@@ -117,24 +117,24 @@ def deleteNLastReplacement(candidates, newCandidates):
 def generate_close_values(height, lines, holes, bumpiness):
     case = random.randint(1, 8);
     if case == 1:
-        return Candidate(height + random.uniform(0, 0.09), lines, holes, bumpiness)
+        return Candidate(height + random.uniform(0, 0.05), lines, holes, bumpiness)
     if case == 2:
-        return Candidate(height, lines + random.uniform(0, 0.09),
+        return Candidate(height, lines + random.uniform(0, 0.05),
                          holes, bumpiness)
     if case == 3:
         return Candidate(height, lines,
-                         holes + random.uniform(0, 0.09), bumpiness)
+                         holes + random.uniform(0, 0.05), bumpiness)
     if case == 4:
         return Candidate(height, lines,
-                         holes, bumpiness + random.uniform(0, 0.09))
+                         holes, bumpiness + random.uniform(0, 0.05))
     if case == 5:
-        return Candidate(height - random.uniform(0, 0.09), lines, holes, bumpiness)
+        return Candidate(height - random.uniform(0, 0.05), lines, holes, bumpiness)
     if case == 6:
-        return Candidate(height, lines - random.uniform(0, 0.09),
+        return Candidate(height, lines - random.uniform(0, 0.05),
                          holes, bumpiness)
     if case == 7:
         return Candidate(height, lines,
-                         holes - random.uniform(0, 0.09), bumpiness)
+                         holes - random.uniform(0, 0.05), bumpiness)
     if case == 8:
         return Candidate(height, lines,
                          holes, bumpiness - random.uniform(0, 0.9))
@@ -142,7 +142,7 @@ def generate_close_values(height, lines, holes, bumpiness):
 
 def tune():
     candidates = []
-    for i in range(0, 40):
+    for i in range(0, 18):
         candidates.append(generate_close_values(0.510066, 0.760666, 0.35663, 0.184483))
 
     # compute first generation
@@ -152,7 +152,7 @@ def tune():
     count = 0;
     while True:
         newCandidates = [];
-        for i in range(0, 30):
+        for i in range(0, 6):
             pair = tournament_select(candidates, 10)
             candidate = cross_over(pair[0], pair[1])
             if(random.random() < 0.05):
