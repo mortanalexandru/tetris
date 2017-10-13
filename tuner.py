@@ -6,6 +6,8 @@ import solution
 from joblib import Parallel, delayed
 import multiprocessing
 import random
+import time
+from datetime import datetime
 
 games = []
 
@@ -40,8 +42,8 @@ def compare_fitness(c):
 
 
 def compute_fitness(candidates):
-    for candidate in candidates:
-        # ai = AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight, candidate.bumpinessWeight)
+    for count,candidate in enumerate(candidates):
+        start = time.time()
         total_score = 0
         num_cores = multiprocessing.cpu_count()
         print("Number of cores {0}".format(num_cores))
@@ -49,6 +51,8 @@ def compute_fitness(candidates):
         for result in results:
             total_score += result[1]
         candidate.fitness = total_score
+        print("candidate {0} has fitness {1}".format(count, total_score))
+        print("ran in %d s" % (time.time() - start))
     return candidates
 
 
