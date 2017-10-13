@@ -142,7 +142,7 @@ def generate_close_values(height, lines, holes, bumpiness):
 
 def tune():
     candidates = []
-    for i in range(0, 100):
+    for i in range(0, 40):
         candidates.append(generate_close_values(0.510066, 0.760666, 0.35663, 0.184483))
 
     # compute first generation
