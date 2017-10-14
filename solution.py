@@ -14,8 +14,12 @@ def read_games():
         for line in games_file:
             games.append(line.rstrip())
 
-def play_game(game, counter):
-    ai = AI(0.510066, 0.760666, 0.35663, 0.184483)
+def play_game(game, counter, candidate = None):
+    if candidate is not None:
+        ai = AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight, candidate.bumpinessWeight, candidate.weighted
+                , candidate.relative)
+    else:
+        ai = AI(0.510066, 0.760666, 0.35663, 0.184483)
     moves = []
     tetris = Tetris(game, np.zeros((20, 10)))
     for i in range(len(game)):

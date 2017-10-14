@@ -2,12 +2,15 @@
 import numpy as np
 import math
 
+
 class AI:
-    def __init__(self, heightWeight, linesWeight, holesWeight, bumpinessWeight):
+    def __init__(self, heightWeight, linesWeight, holesWeight, bumpinessWeight, weightedHeight, relativeHeight):
         self.heightWeight = heightWeight
         self.linesWeight = linesWeight
         self.holesWeight = holesWeight
         self.bumpinessWeight = bumpinessWeight
+        self.weightedHeight = weightedHeight
+        self.relativeHeight = relativeHeight
         self.grid_system = np.zeros((2304, 20, 10))
         self.index = 0
 
@@ -63,6 +66,6 @@ class AI:
             bumpiness += abs(heights[col] - heights[col + 1])
         # reward = -self.heightWeight * agg_height + self.linesWeight * lines - self.holesWeight * holes - self.bumpinessWeight * bumpiness
 
-        reward = 0.22568649650722883 * lines - 0.08679520494876472 * weighted_height - 0.6152727732730796 * agg_height + 0.15842464424735841 *relative_height -0.15452215909537684 * holes - 0.021586109522043928 * bumpiness
+        reward = self.linesWeight * lines + self.weightedHeight * weighted_height + self.heightWeight * agg_height + self.relativeHeight * relative_height + self.holesWeight * holes + self.bumpinessWeight * bumpiness
 
         return reward

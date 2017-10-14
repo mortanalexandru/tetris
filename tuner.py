@@ -2,16 +2,24 @@ import random
 from math import sqrt, floor
 from ai import AI
 from tetris_engine import Tetris
+import solution
+from joblib import Parallel, delayed
+import multiprocessing
+import random
+import time
+from datetime import datetime
 
 games = []
 
 
 class Candidate:
-    def __init__(self, heightWeight, linesWeight, holesWeight, bumpinessWeight):
+    def __init__(self, heightWeight, linesWeight, holesWeight, bumpinessWeight, weighted, relative):
         self.heightWeight = heightWeight
         self.linesWeight = linesWeight
         self.holesWeight = holesWeight
         self.bumpinessWeight = bumpinessWeight
+        self.weighted = weighted
+        self.relative = relative
         self.fitness = 0
 
 
@@ -21,35 +29,34 @@ def generateRandomCandidate():
     return candidate;
 
 
+
 def normalize(candidate):
     norm = sqrt(
-        candidate.heightWeight * candidate.heightWeight + candidate.linesWeight * candidate.linesWeight + candidate.holesWeight * candidate.holesWeight + candidate.bumpinessWeight * candidate.bumpinessWeight);
+        candidate.heightWeight * candidate.heightWeight + candidate.linesWeight * candidate.linesWeight + candidate.holesWeight * candidate.holesWeight + candidate.bumpinessWeight * candidate.bumpinessWeight + candidate.weighted * candidate.weighted + candidate.relative * candidate.relative);
     candidate.heightWeight /= norm;
     candidate.linesWeight /= norm;
     candidate.holesWeight /= norm;
     candidate.bumpinessWeight /= norm;
+    candidate.weighted /= norm;
+    candidate.relative /= norm;
     return candidate
 
 def compare_fitness(c):
     return c.fitness
 
 
-def compute_fitness(candidates, nrGames):
-    for candidate in candidates:
-        ai = AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight, candidate.bumpinessWeight)
+def compute_fitness(candidates):
+    for count,candidate in enumerate(candidates):
+        start = time.time()
         total_score = 0
-        prev_score = {}
-        for i in range(0, nrGames):
-            game = games[i]
-            board = Tetris(game)
-            for piece in game:
-                if not (game.won or game.lost):
-                    move = ai.move(board)
-                    board.make_move(move[0], move[1])
-                else:
-                    print("Game over")
-            total_score += board.score
+        num_cores = multiprocessing.cpu_count()
+        print("Number of cores {0}".format(num_cores))
+        results = Parallel(n_jobs=num_cores)(delayed(solution.play_game)(game, i, candidate) for i, game in enumerate(games))
+        for result in results:
+            total_score += result[1]
         candidate.fitness = total_score
+        print("candidate {0} has fitness {1}".format(count, total_score))
+        print("ran in %d s" % (time.time() - start))
     return candidates
 
 
@@ -71,7 +78,8 @@ def tournament_select(candidates, ways):
     fittestCandidateIndex1 = None;
     fittestCanddiateIndex2 = None;
     for i in range(0, ways):
-        selectedIndex = indices.splice(randomInteger(0, indices.length), 1)[0]
+        idx = randomInteger(0, len(indices))
+        selectedIndex = indices[idx: idx+1][0]
         if (fittestCandidateIndex1 is None or selectedIndex < fittestCandidateIndex1):
             fittestCanddiateIndex2 = fittestCandidateIndex1;
             fittestCandidateIndex1 = selectedIndex;
@@ -103,20 +111,58 @@ def mutate(candidate):
     return candidate
 
 def deleteNLastReplacement(candidates, newCandidates):
-    candidates.slice(-newCandidates.length);
+    candidates[-len(newCandidates):]
     for c in newCandidates:
         candidates.append(c)
     candidates.sort(key=compare_fitness)
     return candidates
 
 
+def generate_close_values(height, lines, holes, bumpiness, weighted, relative):
+    case = random.randint(1, 11);
+    if case == 1:
+        return Candidate(height + random.uniform(0, 0.9), lines, holes, bumpiness, weighted, relative)
+    if case == 2:
+        return Candidate(height, lines + random.uniform(0, 0.9),
+                         holes, bumpiness, weighted, relative)
+    if case == 3:
+        return Candidate(height, lines,
+                         holes + random.uniform(0, 0.9), bumpiness, weighted, relative)
+    if case == 4:
+        return Candidate(height, lines,
+                         holes, bumpiness + random.uniform(0, 0.9), weighted, relative)
+    if case == 5:
+        return Candidate(height - random.uniform(0, 0.9), lines, holes, bumpiness, weighted, relative)
+    if case == 6:
+        return Candidate(height, lines - random.uniform(0, 0.9),
+                         holes, bumpiness, weighted, relative)
+    if case == 7:
+        return Candidate(height, lines,
+                         holes - random.uniform(0, 0.9), bumpiness, weighted, relative)
+    if case == 8:
+        return Candidate(height, lines,
+                         holes, bumpiness - random.uniform(0, 0.9), weighted, relative)
+    if case == 8:
+        return Candidate(height, lines,
+                         holes, bumpiness, weighted + random.uniform(0, 0.9), relative)
+    if case == 9:
+        return Candidate(height, lines,
+                         holes, bumpiness, weighted - random.uniform(0, 0.9), relative)
+    if case == 10:
+        return Candidate(height, lines,
+                         holes, bumpiness - random.uniform(0, 0.9), weighted, relative + random.uniform(0, 0.9))
+    if case == 11:
+        return Candidate(height, lines,
+                         holes, bumpiness - random.uniform(0, 0.9), weighted, relative - random.uniform(0, 0.9))
+
+
 def tune():
     candidates = []
-    for i in range(0, 1000):
-        candidates.push(generateRandomCandidate())
+    for i in range(0, 100):
+        candidates.append(normalize(generate_close_values(- 0.6152727732730796, 0.22568649650722883, -0.15452215909537684, -0.021586109522043928, -0.6152727732730796 , -0.15452215909537684)))
 
     # compute first generation
-    candidates = compute_fitness(candidates, 60)
+    candidates = compute_fitness(candidates)
     candidates.sort(key=compare_fitness)
 
     count = 0;
@@ -130,7 +176,7 @@ def tune():
             candidate = normalize(candidate)
             newCandidates.append(candidate)
         print("Computing fitnesses of new candidates {0}".format(count))
-        candidates = compute_fitness(candidates, 60)
+        candidates = compute_fitness(candidates)
         candidates = deleteNLastReplacement(candidates, newCandidates)
         total_fitness = 0
         for c in candidates:
