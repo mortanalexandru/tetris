@@ -18,7 +18,7 @@ def play_game(game, counter, candidate = None):
     if candidate is not None:
         ai = AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight, candidate.bumpinessWeight)
     else:
-        ai = AI(0.510066, 0.760666, 0.35663, 0.184483)
+        ai = AI(0.503643733775723, 0.7679586740304882, 0.34913145988600847, 0.18625167952973656)
     moves = []
     tetris = Tetris(game, np.zeros((20, 10)))
     for i in range(len(game)):
